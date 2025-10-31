@@ -110,7 +110,7 @@ function App() {
 
   const fetchDistricts = async () => {
     try {
-      const response = await axios.get('/api/districts');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/districts`);
       setDistricts(response.data);
     } catch (error) {
       console.error('Error fetching districts:', error);
@@ -120,7 +120,7 @@ function App() {
   const fetchPerformanceData = async (districtCode) => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/performance/${districtCode}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/performance/${districtCode}`);
       setPerformanceData(response.data.reverse());
     } catch (error) {
       console.error('Error fetching performance data:', error);
