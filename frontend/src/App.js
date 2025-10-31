@@ -31,39 +31,76 @@ function App() {
   const [performanceData, setPerformanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState('en');
+  const [states, setStates] = useState([]);
+  const [selectedState, setSelectedState] = useState('');
 
   const text = {
     en: {
-      title: 'MGNREGA District Performance',
-      subtitle: 'Track your district\'s employment program',
-      selectDistrict: 'Select Your District',
-      householdsEmployed: 'Households Employed',
-      personDays: 'Person-Days Generated',
-      avgDays: 'Average Days of Employment',
-      worksCompleted: 'Works Completed',
-      worksOngoing: 'Works Ongoing',
-      expenditure: 'Total Expenditure (₹)',
-      trend: 'Performance Trend (Last 12 Months)',
-      loading: 'Loading data...',
+      title: 'MGNREGA Work Tracker',
+      subtitle: 'Know Your Rights • Track Your Work',
+      selectDistrict: '📍 Choose Your District',
+      selectPlaceholder: 'Select Your District',
+      householdsEmployed: 'Families Got Work',
+      householdsSubtext: 'Total families working',
+      personDays: 'Total Work Days',
+      personDaysSubtext: 'Days of work given',
+      avgDays: 'Days Per Family',
+      avgDaysSubtext: 'Average work days',
+      worksCompleted: 'Works Finished',
+      worksCompletedSubtext: 'Projects completed',
+      worksOngoing: 'Works Running',
+      expenditure: 'Money Spent',
+      expenditureSubtext: 'Total amount',
+      trend: '📊 Work Progress (Last Year)',
+      worksStatus: '🏗️ Projects Status',
+      loading: '⏳ Getting your data',
+      completed: 'Completed',
+      ongoing: 'In Progress',
+      infoTip: '💡 Select your district to see how many days of work and money your area received!',
     },
     hi: {
-      title: 'मनरेगा जिला प्रदर्शन',
-      subtitle: 'अपने जिले के रोजगार कार्यक्रम को ट्रैक करें',
-      selectDistrict: 'अपना जिला चुनें',
-      householdsEmployed: 'रोजगार प्राप्त परिवार',
-      personDays: 'व्यक्ति-दिवस उत्पन्न',
-      avgDays: 'औसत रोजगार दिवस',
-      worksCompleted: 'पूर्ण कार्य',
-      worksOngoing: 'चल रहे कार्य',
-      expenditure: 'कुल व्यय (₹)',
-      trend: 'प्रदर्शन रुझान (पिछले 12 महीने)',
-      loading: 'डेटा लोड हो रहा है...',
+      title: 'मनरेगा काम ट्रैकर',
+      subtitle: 'अपने अधिकार जानें • अपना काम देखें',
+      selectDistrict: '📍 अपना जिला चुनें',
+      selectPlaceholder: 'अपना जिला चुनें',
+      householdsEmployed: 'परिवारों को मिला काम',
+      householdsSubtext: 'कुल काम करने वाले परिवार',
+      personDays: 'कुल काम के दिन',
+      personDaysSubtext: 'दिए गए काम के दिन',
+      avgDays: 'प्रति परिवार दिन',
+      avgDaysSubtext: 'औसत काम के दिन',
+      worksCompleted: 'पूरे हुए काम',
+      worksCompletedSubtext: 'पूरी हुई परियोजनाएं',
+      worksOngoing: 'चल रहे काम',
+      expenditure: 'खर्च की गई राशि',
+      expenditureSubtext: 'कुल खर्च',
+      trend: '📊 काम की प्रगति (पिछला साल)',
+      worksStatus: '🏗️ परियोजनाओं की स्थिति',
+      loading: '⏳ आपका डेटा ला रहे हैं',
+      completed: 'पूरे हुए',
+      ongoing: 'चल रहे',
+      infoTip: '💡 अपना जिला चुनें और देखें कि आपके क्षेत्र को कितने दिन का काम और कितना पैसा मिला!',
     },
   };
 
   useEffect(() => {
     fetchDistricts();
   }, []);
+
+  useEffect(() => {
+    // Extract unique states from districts
+    const uniqueStates = Array.from(
+      new Set(districts.map((d) => d.state_name))
+    ).map((state_name) => ({
+      state_name,
+      state_code: districts.find((d) => d.state_name === state_name)?.state_code,
+    }));
+    setStates(uniqueStates);
+  }, [districts]);
+
+  useEffect(() => {
+    setSelectedDistrict('');
+  }, [selectedState]);
 
   useEffect(() => {
     if (selectedDistrict) {
@@ -97,6 +134,10 @@ function App() {
   };
 
   const latestData = performanceData[performanceData.length - 1] || {};
+
+  const totalWorks = (latestData.works_completed || 0) + (latestData.works_ongoing || 0);
+  const completedPercent = totalWorks > 0 ? ((latestData.works_completed || 0) / totalWorks * 100) : 0;
+  const ongoingPercent = totalWorks > 0 ? ((latestData.works_ongoing || 0) / totalWorks * 100) : 0;
 
   const chartData = {
     labels: performanceData.map((d) => d.month),
@@ -203,66 +244,184 @@ function App() {
     }
   };
 
+  // Filter districts for selected state
+  const filteredDistricts = selectedState
+    ? districts.filter((d) => d.state_name === selectedState)
+    : [];
+
   return (
     <div className="App">
       <header className="header">
+        <div className="header-flag">
+          <span className="flag-icon">🇮🇳</span>
+        </div>
         <h1>{text[language].title}</h1>
         <p>{text[language].subtitle}</p>
-        <button onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}>
-          {language === 'en' ? 'हिंदी' : 'English'}
-        </button>
+        <div className="language-toggle">
+          <button 
+            className={language === 'en' ? 'active' : ''} 
+            onClick={() => setLanguage('en')}
+          >
+            English
+          </button>
+          <button 
+            className={language === 'hi' ? 'active' : ''} 
+            onClick={() => setLanguage('hi')}
+          >
+            हिंदी
+          </button>
+        </div>
       </header>
 
       <div className="container">
-        <div className="district-selector">
-          <label>{text[language].selectDistrict}:</label>
-          <select
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-          >
-            <option value="">-- {text[language].selectDistrict} --</option>
-            {districts.map((district) => (
-              <option key={district.district_code} value={district.district_code}>
-                {district.district_name}
-              </option>
-            ))}
-          </select>
+        <div className="info-tip">
+          <span className="info-tip-icon">💡</span>
+          <div className="info-tip-text">{text[language].infoTip}</div>
         </div>
+
+        {/* State Selector */}
+        <div className="district-selector">
+          <div className="selector-header">
+            <span className="selector-icon">🌏</span>
+            <label>
+              {language === 'en' ? 'Select State' : 'राज्य चुनें'}
+            </label>
+          </div>
+          <div className="select-wrapper">
+            <select
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+            >
+              <option value="">
+                -- {language === 'en' ? 'Select State' : 'राज्य चुनें'} --
+              </option>
+              {states.map((state) => (
+                <option key={state.state_code} value={state.state_name}>
+                  {state.state_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* District Selector (only show if state is selected) */}
+        {selectedState && (
+          <div className="district-selector">
+            <div className="selector-header">
+              <span className="selector-icon">📍</span>
+              <label>{text[language].selectDistrict}</label>
+            </div>
+            <div className="select-wrapper">
+              <select
+                value={selectedDistrict}
+                onChange={(e) => setSelectedDistrict(e.target.value)}
+              >
+                <option value="">
+                  -- {text[language].selectPlaceholder} --
+                </option>
+                {filteredDistricts.map((district) => (
+                  <option key={district.district_code} value={district.district_code}>
+                    {district.district_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
         {loading && <p className="loading">{text[language].loading}</p>}
 
         {selectedDistrict && !loading && performanceData.length > 0 && (
           <>
+            <div className="success-message">
+              ✅ {language === 'en' ? 'Data Found!' : 'डेटा मिल गया!'}
+            </div>
+
             <div className="metrics-grid">
               <div className="metric-card">
-                <div className="metric-icon">👥</div>
-                <h3>{formatNumber(latestData.households_employed)}</h3>
-                <p>{text[language].householdsEmployed}</p>
+                <div className="metric-icon">👨‍👩‍👧‍👦</div>
+                <div className="metric-value">{formatNumber(latestData.households_employed)}</div>
+                <div className="metric-label">
+                  {text[language].householdsEmployed}
+                  <span className="metric-sublabel">{text[language].householdsSubtext}</span>
+                </div>
               </div>
               <div className="metric-card">
                 <div className="metric-icon">📅</div>
-                <h3>{formatNumber(latestData.persondays_generated)}</h3>
-                <p>{text[language].personDays}</p>
+                <div className="metric-value">{formatNumber(latestData.persondays_generated)}</div>
+                <div className="metric-label">
+                  {text[language].personDays}
+                  <span className="metric-sublabel">{text[language].personDaysSubtext}</span>
+                </div>
               </div>
               <div className="metric-card">
                 <div className="metric-icon">⏱️</div>
-                <h3>{latestData.average_days_employment}</h3>
-                <p>{text[language].avgDays}</p>
+                <div className="metric-value">{Math.round(latestData.average_days_employment)}</div>
+                <div className="metric-label">
+                  {text[language].avgDays}
+                  <span className="metric-sublabel">{text[language].avgDaysSubtext}</span>
+                </div>
               </div>
               <div className="metric-card">
                 <div className="metric-icon">💰</div>
-                <h3>₹{formatNumber(latestData.total_expenditure)}</h3>
-                <p>{text[language].expenditure}</p>
+                <div className="metric-value">₹{formatNumber(Math.round(latestData.total_expenditure / 10000000))}Cr</div>
+                <div className="metric-label">
+                  {text[language].expenditure}
+                  <span className="metric-sublabel">{text[language].expenditureSubtext}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="progress-section">
+              <div className="progress-header">
+                <span className="chart-icon">🏗️</span>
+                <h3>{text[language].worksStatus}</h3>
+              </div>
+              
+              <div className="progress-item">
+                <div className="progress-label">
+                  <span>✅ {text[language].completed}</span>
+                  <span>{latestData.works_completed || 0}</span>
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill works-completed" 
+                    style={{width: `${completedPercent}%`}}
+                  >
+                    {completedPercent > 10 && `${Math.round(completedPercent)}%`}
+                  </div>
+                </div>
+              </div>
+
+              <div className="progress-item">
+                <div className="progress-label">
+                  <span>🔄 {text[language].ongoing}</span>
+                  <span>{latestData.works_ongoing || 0}</span>
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{width: `${ongoingPercent}%`}}
+                  >
+                    {ongoingPercent > 10 && `${Math.round(ongoingPercent)}%`}
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="charts">
               <div className="chart-container">
-                <h3>{text[language].trend}</h3>
+                <div className="chart-header">
+                  <span className="chart-icon">📈</span>
+                  <h3>{text[language].trend}</h3>
+                </div>
                 <Line data={chartData} options={chartOptions} />
               </div>
               <div className="chart-container">
-                <h3>Works Status</h3>
+                <div className="chart-header">
+                  <span className="chart-icon">📊</span>
+                  <h3>{text[language].worksStatus}</h3>
+                </div>
                 <Bar data={barData} options={barOptions} />
               </div>
             </div>
