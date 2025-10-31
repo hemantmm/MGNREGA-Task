@@ -54,15 +54,7 @@ cd /path/to/backend && npm run sync
 
 ## Deployment
 
-### VPS Deployment (DigitalOcean/AWS/Linode)
-
-1. Install Node.js and PostgreSQL on VPS
-2. Clone repository
-3. Setup database and run migrations
-4. Build frontend: `cd frontend && npm run build`
-5. Serve frontend with nginx
-6. Run backend with PM2: `pm2 start backend/index.js`
-7. Setup SSL with Let's Encrypt
+### Using Vercel deployed
 
 ## Notes
 
