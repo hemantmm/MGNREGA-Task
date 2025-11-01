@@ -31,8 +31,6 @@ function App() {
   const [performanceData, setPerformanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState('en');
-  const [states, setStates] = useState([]);
-  const [selectedState, setSelectedState] = useState('');
 
   const text = {
     en: {
@@ -88,21 +86,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Extract unique states from districts
-    const uniqueStates = Array.from(
-      new Set(districts.map((d) => d.state_name))
-    ).map((state_name) => ({
-      state_name,
-      state_code: districts.find((d) => d.state_name === state_name)?.state_code,
-    }));
-    setStates(uniqueStates);
-  }, [districts]);
-
-  useEffect(() => {
-    setSelectedDistrict('');
-  }, [selectedState]);
-
-  useEffect(() => {
     if (selectedDistrict) {
       fetchPerformanceData(selectedDistrict);
     }
@@ -111,7 +94,7 @@ function App() {
   const fetchDistricts = async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/districts`);
-      setDistricts(response.data);
+      setDistricts(response.data.filter(d => d.state_name === 'UTTAR PRADESH'));
     } catch (error) {
       console.error('Error fetching districts:', error);
     }
@@ -244,11 +227,6 @@ function App() {
     }
   };
 
-  // Filter districts for selected state
-  const filteredDistricts = selectedState
-    ? districts.filter((d) => d.state_name === selectedState)
-    : [];
-
   return (
     <div className="App">
       <header className="header">
@@ -279,55 +257,28 @@ function App() {
           <div className="info-tip-text">{text[language].infoTip}</div>
         </div>
 
-        {/* State Selector */}
+        {/* Only District Selector for Uttar Pradesh */}
         <div className="district-selector">
           <div className="selector-header">
-            <span className="selector-icon">🌏</span>
-            <label>
-              {language === 'en' ? 'Select State' : 'राज्य चुनें'}
-            </label>
+            <span className="selector-icon">📍</span>
+            <label>{text[language].selectDistrict}</label>
           </div>
           <div className="select-wrapper">
             <select
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
             >
               <option value="">
-                -- {language === 'en' ? 'Select State' : 'राज्य चुनें'} --
+                -- {text[language].selectPlaceholder} --
               </option>
-              {states.map((state) => (
-                <option key={state.state_code} value={state.state_name}>
-                  {state.state_name}
+              {districts.map((district) => (
+                <option key={district.district_code} value={district.district_code}>
+                  {district.district_name}
                 </option>
               ))}
             </select>
           </div>
         </div>
-
-        {/* District Selector (only show if state is selected) */}
-        {selectedState && (
-          <div className="district-selector">
-            <div className="selector-header">
-              <span className="selector-icon">📍</span>
-              <label>{text[language].selectDistrict}</label>
-            </div>
-            <div className="select-wrapper">
-              <select
-                value={selectedDistrict}
-                onChange={(e) => setSelectedDistrict(e.target.value)}
-              >
-                <option value="">
-                  -- {text[language].selectPlaceholder} --
-                </option>
-                {filteredDistricts.map((district) => (
-                  <option key={district.district_code} value={district.district_code}>
-                    {district.district_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
 
         {loading && <p className="loading">{text[language].loading}</p>}
 
