@@ -36,7 +36,7 @@ function App() {
     en: {
       title: 'MGNREGA Work Tracker',
       subtitle: 'Know Your Rights • Track Your Work',
-      selectDistrict: '📍 Choose Your District',
+      selectDistrict: '📍 Choose Your District For UP',
       selectPlaceholder: 'Select Your District',
       householdsEmployed: 'Families Got Work',
       householdsSubtext: 'Total families working',
